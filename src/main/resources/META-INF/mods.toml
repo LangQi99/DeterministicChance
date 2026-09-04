@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="deterministic_chance"
+version="${version}"
+displayName="确定的概率"
+authors="LangQi99"
+description='''
+把概率产出转换为可预测的确定序列，并为 AE2 批量处理样板提供精确产物计划。
+'''
+
+[[dependencies.deterministic_chance]]
+modId="forge"
+mandatory=true
+versionRange="[47.4.3,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.deterministic_chance]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.20.2)"
+ordering="NONE"
+side="BOTH"
