@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.langqi99.deterministicchance.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "mekanism.SawmillChanceOutputMixin"
+  ],
+  "client": [
+    "ae2.EncodePatternTransferHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -10,6 +10,6 @@ public final class DeterministicChance {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public DeterministicChance() {
-        LOGGER.info("确定的概率 core loaded");
+        LOGGER.info("确定的概率 loaded");
     }
 }

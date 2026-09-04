@@ -13,17 +13,41 @@ base {
 loom {
     silentMojangMappingsLicense()
     forge {
+        mixinConfig "deterministic_chance.mixins.json"
     }
 }
 
 repositories {
     mavenCentral()
+    maven {
+        url = "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven {
+        name = "Modmaven"
+        url = "https://modmaven.dev/"
+    }
+    maven {
+        url = "https://dvs1.progwml6.com/files/maven/"
+        content {
+            includeGroup "mezz.jei"
+        }
+    }
 }
 
 dependencies {
     minecraft "net.minecraft:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
     forge "net.minecraftforge:forge:${forge_version}"
+
+    // First real machine adapter and AE2/JEI pattern-transfer integration.
+    modImplementation "curse.maven:mekanism-268560:${mekanism_file_id}"
+    modImplementation "appeng:appliedenergistics2-forge:${ae2_version}"
+    modImplementation "org.appliedenergistics:guideme:${guideme_version}"
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
+    modRuntimeOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
 
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"

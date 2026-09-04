@@ -24,4 +24,10 @@ class DeterministicSequenceTest {
         assertEquals(8, sequence.advance(10));
         assertEquals(0, sequence.position());
     }
+
+    @Test
+    void convertsRecipeDecimalChanceToReducedFraction() {
+        assertEquals(new ChanceFraction(1, 4), ChanceFraction.fromDouble(0.25));
+        assertEquals(new ChanceFraction(4, 5), ChanceFraction.fromDouble(0.8));
+    }
 }
