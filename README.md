@@ -1,6 +1,36 @@
-# 确定的概率（Deterministic Chance）
+<p align="center">
+  <img src="docs/images/mekanism-chance-recipe.png" width="100%" alt="Mekanism 概率机器配方">
+</p>
 
-把 Minecraft 模组机器的概率产出变成可预测、可持久化的确定序列，并为 AE2 生成精确的批量处理样板。
+<p align="center">
+  <strong>机器看到的是概率</strong>
+  &nbsp;&nbsp;↓&nbsp;&nbsp;
+  <strong>AE2 得到的是确定答案</strong>
+</p>
+
+<p align="center">
+  <img src="docs/images/ae2-deterministic-pattern.png" width="72%" alt="AE2 确定概率处理样板">
+</p>
+
+<h1 align="center">确定的概率</h1>
+
+<h2 align="center">我破解了概率样板。</h2>
+
+<p align="center">
+  把 Minecraft 模组机器的随机产出变成可预测的确定序列，<br>
+  再为 AE2 编出结果绝对准确的批量处理样板。
+</p>
+
+<p align="center">
+  <img alt="Minecraft 1.20.1" src="https://img.shields.io/badge/Minecraft-1.20.1-62B47A?style=for-the-badge&logo=mojangstudios&logoColor=white">
+  <img alt="Forge 47.4.3" src="https://img.shields.io/badge/Forge-47.4.3-E04E14?style=for-the-badge">
+  <img alt="Mekanism 10.4.16" src="https://img.shields.io/badge/Mekanism-10.4.16-18A6B8?style=for-the-badge">
+  <img alt="AE2 15.4.10" src="https://img.shields.io/badge/AE2-15.4.10-9B6CFF?style=for-the-badge">
+</p>
+
+---
+
+## 从随机到确定
 
 例如配方 `1 A → 80% 1 B`：
 
