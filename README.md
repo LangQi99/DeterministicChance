@@ -1,75 +1,106 @@
-<p align="center">
-  <img src="docs/images/mekanism-chance-recipe.png" width="100%" alt="Mekanism 概率机器配方">
-</p>
+<div align="center">
 
-<p align="center">
-  <strong>机器看到的是概率</strong>
-  &nbsp;&nbsp;↓&nbsp;&nbsp;
-  <strong>AE2 得到的是确定答案</strong>
-</p>
+# Deterministic Chance · 确定的概率
 
-<p align="center">
-  <img src="docs/images/ae2-deterministic-pattern.png" width="72%" alt="AE2 确定概率处理样板">
-</p>
+**把机器里的概率，写成 AE2 的确定答案。**
 
-<h1 align="center">确定的概率</h1>
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.20.1-62B47A?style=for-the-badge)](#运行环境)
+[![Forge](https://img.shields.io/badge/Forge-47.4.3-E04E14?style=for-the-badge)](#运行环境)
+[![Build](https://img.shields.io/github/actions/workflow/status/LangQi99/DeterministicChance/build.yml?branch=main&style=for-the-badge&label=Build)](https://github.com/LangQi99/DeterministicChance/actions/workflows/build.yml)
+[![License](https://img.shields.io/github/license/LangQi99/DeterministicChance?style=for-the-badge)](LICENSE)
 
-<h2 align="center">我破解了概率样板。</h2>
+<img src="docs/images/mekanism-chance-recipe.png" alt="Mekanism 概率机器配方" width="900">
 
-<p align="center">
-  把 Minecraft 模组机器的随机产出变成可预测的确定序列，<br>
-  再为 AE2 编出结果绝对准确的批量处理样板。
-</p>
+<br>
 
-<p align="center">
-  <img alt="Minecraft 1.20.1" src="https://img.shields.io/badge/Minecraft-1.20.1-62B47A?style=for-the-badge&logo=mojangstudios&logoColor=white">
-  <img alt="Forge 47.4.3" src="https://img.shields.io/badge/Forge-47.4.3-E04E14?style=for-the-badge">
-  <img alt="Mekanism 10.4.16" src="https://img.shields.io/badge/Mekanism-10.4.16-18A6B8?style=for-the-badge">
-  <img alt="AE2 15.4.10" src="https://img.shields.io/badge/AE2-15.4.10-9B6CFF?style=for-the-badge">
-</p>
+<img src="docs/images/ae2-deterministic-pattern.png" alt="AE2 确定概率处理样板" width="640">
+
+<br>
+
+<sub>“我破解了概率样板。”</sub>
+
+</div>
 
 ---
 
-## 从随机到确定
+## 这是什么？
 
-例如配方 `1 A → 80% 1 B`：
+**Deterministic Chance（确定的概率）** 是一个连接
+[Mekanism](https://github.com/mekanism/Mekanism)、
+[Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2)
+与 [JEI](https://github.com/mezz/JustEnoughItems) 的 Forge 模组。
 
-- 机器执行序列固定为 `出、出、出、出、不出`，每 5 次循环；
-- AE2 处理样板编码为 `5 A → 4 B`；
-- 主产物、副产物和多个概率产物使用同一个批次的精确整数结果。
+它把机器的概率产出换成严格可预测的循环，并在从 JEI 向 AE2 样板编码终端填充配方时，自动生成结果完全匹配的批量处理样板。
 
-## 当前状态
+> 如果原配方是 `1 A → 80% × 1 B`，机器会固定执行“出、出、出、出、不出”，AE2 则直接编码为 `5 A → 4 B`。
 
-仓库目前包含通用核心和第一套可玩的实际适配：
+## 从概率配方到确定样板
 
-- 概率分数化与约分；
-- 可持久化的确定序列；
-- 多输入、多输出、副产物的最小精确批次计算；
-- 机器与配方适配 API；
-- Mekanism 精密锯木机用确定序列代替随机副产物；
-- 从 JEI 向 AE2 样板编码终端填充锯切配方时，自动换算完整确定批次；
-- 单元测试。
+以 Mekanism 精密锯木机的橡木配方为例：
 
-例如 Mekanism 的橡木锯切 `1 原木 → 6 木板 + 25% 锯末` 会填充为
-`4 原木 → 24 木板 + 1 锯末`。机器连续执行四次也严格只产出一次锯末。
+```text
+原配方：1 原木 → 6 木板 + 25% × 1 锯末
+AE 样板：4 原木 → 24 木板 + 1 锯末
+机器序列：出锯末、不出、不出、不出，然后循环
+```
 
-当前 Mekanism 原型的相位按已加载的配方对象保存，足以覆盖单机测试。下一阶段会把相位改为
-`维度 + 机器位置 + 配方 ID + 输出槽` 的服务端持久状态，以正确覆盖多台机器和重启续算。
+JEI 仍然忠实展示原模组定义的单次概率；点击配方填充按钮时，Deterministic Chance 会把它换算成最小完整周期后再写入 AE2。
 
-目标环境为 Minecraft 1.20.1、Forge 47.4.3、AE2 15.4.10、Mekanism 10.4.16 和 JEI 15.49.0.188。
+## 核心功能
 
-## 为什么仍需要机器适配
+| 功能 | 说明 |
+| --- | --- |
+| 确定序列 | 用固定循环替代机器的独立随机判定，每个周期严格命中指定次数 |
+| 精确样板 | 自动把 `80%` 编成 `5 → 4`、把 `25%` 编成 `4 → 1` |
+| JEI 联动 | 在 AE2 样板编码终端点击 JEI 填充时自动完成批次换算 |
+| 主产物与副产物 | 固定主产物按完整周期放大，概率副产物按命中次数写入 |
+| 多输入、多输出 | 通用计划器支持多个输入、固定输出和多个独立概率输出 |
+| 最小批次 | 对多个概率分母求最小公倍数，生成最小的整数输入输出计划 |
+| 原机逻辑保留 | 不改机器原有耗能、耗时、升级与输入输出流程，只接管概率结果 |
 
-Forge、AE2 和 JEI 都没有统一的“概率输出”协议。JEI 负责展示配方，不负责定义机器实际如何掷概率；每个机器模组也可能把概率写在不同的配方类或执行流程里。
+## 当前支持
 
-因此本项目采用“通用核心 + 模组级适配器”：同一模组若共享一个中央产出实现，通常只需要一个适配器即可覆盖其多数机器，不需要逐台机器修改。详见 [架构说明](docs/ARCHITECTURE.md)。
+目前已经完成第一套可玩的实际适配：
 
-## 构建
+- **Mekanism 精密锯木机**：实际副产物由确定序列控制。
+- **AE2 + JEI**：所有 Mekanism 锯切配方在填入样板编码终端时自动换算完整周期。
+- **通用概率核心**：支持约分、序列推进、多输入、多输出、副产物与最小精确批次计算。
+
+当前 Mekanism 原型按已加载的配方对象保存序列相位，适合单机和单台机器验证。后续会把状态升级为
+`维度 + 机器位置 + 配方 ID + 输出槽` 的服务端存档数据，覆盖多台机器并在重启后继续原来的循环。
+
+## 为什么仍需要机器适配？
+
+Forge、AE2 和 JEI 没有统一的“概率输出”协议。JEI 负责展示配方，但不决定机器在什么时候、以什么方式掷概率；不同机器模组也可能把随机判定放在完全不同的执行流程中。
+
+因此本项目采用 **通用核心 + 模组级适配器**：
+
+- 通用核心负责把概率变成精确分数、计算最小批次并推进确定序列。
+- 模组适配器负责读取原生概率，并在机器真正提交产物的位置接管结果。
+- 同一模组如果共享中央概率实现，一个适配器通常就能覆盖一整类机器，无需逐台修改。
+
+更完整的设计与兼容边界见 [架构说明](docs/ARCHITECTURE.md)。
+
+## 运行环境
+
+| 依赖 | 版本 |
+| --- | --- |
+| Minecraft | 1.20.1 |
+| Forge | 47.4.3 或兼容的 47.x 版本 |
+| Applied Energistics 2 | 15.4.10 |
+| Mekanism | 10.4.16 |
+| JEI | 15.49.x |
+| Java | 17 |
+
+## 开发构建
 
 ```bash
 ./gradlew build
+./gradlew runClient
 ```
 
-## License
+构建完成的模组位于 `build/libs/`。项目通过公开依赖引用 AE2、Mekanism 与 JEI，不会将它们的源码或资源打包进本模组。
 
-MIT
+## 许可证
+
+Deterministic Chance 使用 [MIT License](LICENSE) 开源。AE2、Mekanism 与 JEI 的内容仍分别受其自身许可证约束。
