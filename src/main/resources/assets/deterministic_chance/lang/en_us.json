@@ -1,0 +1,3 @@
+{
+  "gui.deterministic_chance.exact_batch_unsupported": "Cannot encode an exact deterministic batch: %s"
+}

@@ -15,6 +15,33 @@ loom {
     forge {
         mixinConfig "deterministic_chance.mixins.json"
     }
+    mods {
+        deterministic_chance {
+            sourceSet sourceSets.main
+        }
+    }
+    runs {
+        client {
+            client()
+            property "forge.enabledGameTestNamespaces", "deterministic_chance"
+            runDir "run-client"
+        }
+        server {
+            server()
+            property "forge.enabledGameTestNamespaces", "deterministic_chance"
+            runDir "run-server"
+        }
+        gameTestServer {
+            environment "gameTestServer"
+            forgeTemplate "gameTestServer"
+            property "forge.enabledGameTestNamespaces", "deterministic_chance"
+            property "deterministicchance.expectedTestMods",
+                    providers.gradleProperty("expected_test_mods").getOrElse("")
+            property "deterministicchance.forbiddenTestMods",
+                    providers.gradleProperty("forbidden_test_mods").getOrElse("")
+            runDir "run-gametest"
+        }
+    }
 }
 
 repositories {
@@ -29,6 +56,17 @@ repositories {
         name = "Modmaven"
         url = "https://modmaven.dev/"
     }
+    maven { url = "https://maven.createmod.net" }
+    maven { url = "https://maven.ithundxr.dev/snapshots" }
+    maven { url = "https://maven.covers1624.net" }
+    maven { url = "https://maven.firstdark.dev/snapshots" }
+    maven {
+        name = "GTCEu"
+        url = "https://maven.gtceu.com"
+        content {
+            includeGroup "com.gregtechceu.gtceu"
+        }
+    }
     maven {
         url = "https://dvs1.progwml6.com/files/maven/"
         content {
@@ -42,21 +80,118 @@ dependencies {
     mappings loom.officialMojangMappings()
     forge "net.minecraftforge:forge:${forge_version}"
 
-    // First real machine adapter and AE2/JEI pattern-transfer integration.
-    modImplementation "curse.maven:mekanism-268560:${mekanism_file_id}"
-    modImplementation "appeng:appliedenergistics2-forge:${ae2_version}"
-    modImplementation "org.appliedenergistics:guideme:${guideme_version}"
+    // Every integration is compile-only. Runtime fixtures are opt-in so the
+    // same jar can be verified both with and without each supported mod.
+    modCompileOnly "curse.maven:mekanism-268560:${mekanism_file_id}"
+    if (property("runtime_mekanism").toBoolean()) {
+        modRuntimeOnly "curse.maven:mekanism-268560:${mekanism_file_id}"
+    }
+
+    modCompileOnly "appeng:appliedenergistics2-forge:${ae2_version}"
+    modCompileOnly "org.appliedenergistics:guideme:${guideme_version}"
+    if (property("runtime_ae2").toBoolean()) {
+        modRuntimeOnly "appeng:appliedenergistics2-forge:${ae2_version}"
+        modRuntimeOnly "org.appliedenergistics:guideme:${guideme_version}"
+    }
+
     modCompileOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
-    modRuntimeOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
+    if (property("runtime_jei").toBoolean()) {
+        modRuntimeOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
+    }
+
+    modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") {
+        transitive = false
+    }
+    // The slim Create artifact references these API types from its public
+    // classes, so they are needed to compile the optional machine hooks too.
+    modCompileOnly("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}") {
+        transitive = false
+    }
+    modCompileOnly "dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}"
+    modCompileOnly "com.tterrag.registrate:Registrate:${registrate_version}"
+    if (property("runtime_create").toBoolean()) {
+        modRuntimeOnly("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") {
+            transitive = false
+        }
+        modRuntimeOnly "net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"
+        modRuntimeOnly "dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"
+        modRuntimeOnly "dev.engine-room.vanillin:vanillin-forge-${minecraft_version}:${vanillin_version}"
+        modRuntimeOnly "com.tterrag.registrate:Registrate:${registrate_version}"
+        // The slim Create development artifact omits its jar-in-jar copy.
+        modRuntimeOnly "io.github.llamalad7:mixinextras-forge:${mixin_extras_version}"
+        forgeRuntimeLibrary "io.github.llamalad7:mixinextras-common:${mixin_extras_version}"
+    }
+
+    modCompileOnly "com.teamcofh:cofh_core:${cofh_core_version}"
+    modCompileOnly "com.teamcofh:thermal_core:${thermal_core_version}"
+    modCompileOnly("com.teamcofh:thermal_foundation:${thermal_foundation_version}") {
+        transitive = false
+    }
+    modCompileOnly "com.teamcofh:thermal_expansion:${thermal_expansion_version}"
+    if (property("runtime_thermal").toBoolean()) {
+        modRuntimeOnly "com.teamcofh:cofh_core:${cofh_core_version}"
+        modRuntimeOnly "com.teamcofh:thermal_core:${thermal_core_version}"
+        modRuntimeOnly("com.teamcofh:thermal_foundation:${thermal_foundation_version}") {
+            transitive = false
+        }
+        modRuntimeOnly "com.teamcofh:thermal_expansion:${thermal_expansion_version}"
+    }
+
+    modCompileOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}") {
+        transitive = false
+    }
+    modCompileOnly("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") {
+        transitive = false
+    }
+    if (property("runtime_gtceu").toBoolean()) {
+        modRuntimeOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}") {
+            transitive = false
+        }
+        // GTCEu declares these as embedded dependencies, but the development
+        // artifact used by Loom does not expose its jar-in-jar payload.
+        modRuntimeOnly("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") {
+            transitive = false
+        }
+        modRuntimeOnly "curse.maven:configuration-444699:${configuration_file_id}"
+        // GTCEu/LDLib ship these inside production jars. Loom's development
+        // artifacts do not unpack those nested jars for the GameTest runtime.
+        modRuntimeOnly "com.tterrag.registrate:Registrate:${registrate_version}"
+        modRuntimeOnly "io.github.llamalad7:mixinextras-forge:${mixin_extras_version}"
+        forgeRuntimeLibrary "io.github.llamalad7:mixinextras-common:${mixin_extras_version}"
+    }
+
+    modCompileOnly("curse.maven:immersive-engineering-231951:${immersive_engineering_file_id}") {
+        transitive = false
+    }
+    if (property("runtime_immersive_engineering").toBoolean()) {
+        modRuntimeOnly("curse.maven:immersive-engineering-231951:${immersive_engineering_file_id}") {
+            transitive = false
+        }
+    }
 
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"
 }
 
 processResources {
+    dependsOn "generateGameTestTemplate"
     inputs.property "version", project.version
     filesMatching("META-INF/mods.toml") {
         expand version: project.version
+    }
+}
+
+sourceSets.main.resources.srcDir(layout.buildDirectory.dir("generated/resources/gameTest"))
+
+tasks.register("generateGameTestTemplate") {
+    def outputFile = layout.buildDirectory.file(
+            "generated/resources/gameTest/data/deterministic_chance/structures/empty.nbt")
+    outputs.file(outputFile)
+    doLast {
+        def encoded = "H4sIAAAAAAAA/2WPwU4DMQxEB7Yt2VSo3PgXzpwRJ64r79YtLtk4SixV8PUkKmUPteSDPfZongd6rIr8cAeg9d21eziOJiZc0KrHZgw6fRXfVI8ujuawPUikMBQjYzzOEnnKdLAXkuywijQznpftrOMwaayjadOTasBu0XlO9u2wPqlEg8saAo2BHe5lj6fl7iTHQmeHjVE+st1Y1LBd0nJl+q8O60vSC9BDosBm/Efk37Mmzo24gmmWyk8mGuH3eo5D1GyfqLHfGtZNnOq+fSWjD86lPWFX8AuuiQ4xYAEAAA=="
+        def target = outputFile.get().asFile
+        target.parentFile.mkdirs()
+        target.bytes = Base64.decoder.decode(encoded)
     }
 }
 
@@ -66,6 +201,10 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
+tasks.named("sourcesJar").configure {
+    dependsOn "generateGameTestTemplate"
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.release = 17
     options.encoding = "UTF-8"
@@ -73,6 +212,31 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
+}
+
+def gameTestLog = layout.projectDirectory.file("run-gametest/logs/latest.log")
+
+tasks.named("runGameTestServer").configure {
+    doFirst {
+        project.delete(gameTestLog)
+    }
+}
+
+tasks.register("verifyGameTests") {
+    group = "verification"
+    description = "Runs Forge GameTests and fails if the server exits before reporting success."
+    dependsOn "runGameTestServer"
+    doLast {
+        File logFile = gameTestLog.asFile
+        if (!logFile.isFile()) {
+            throw new GradleException("GameTest server did not create ${logFile}")
+        }
+        String log = logFile.getText("UTF-8")
+        if (!(log =~ /All \d+ required tests passed/).find()) {
+            throw new GradleException(
+                    "GameTest server did not report a complete successful run; inspect ${logFile}")
+        }
+    }
 }
 
 publishing {

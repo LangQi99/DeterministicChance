@@ -1,6 +1,10 @@
 .gradle/
 build/
 run/
+run-client/
+run-server/
+run-gametest/
+logs/
 out/
 .idea/
 *.iml

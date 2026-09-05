@@ -1,5 +1,6 @@
 package io.github.langqi99.deterministicchance.mixin.mekanism;
 
+import io.github.langqi99.deterministicchance.compat.mekanism.MekanismMachineRollContext;
 import io.github.langqi99.deterministicchance.compat.mekanism.SawmillSequenceController;
 import mekanism.api.recipes.SawmillRecipe;
 import net.minecraft.world.item.ItemStack;
@@ -22,6 +23,11 @@ abstract class SawmillChanceOutputMixin {
 
     @Inject(method = {"getSecondaryOutput", "nextSecondaryOutput"}, at = @At("HEAD"), cancellable = true)
     private void deterministicChance(CallbackInfoReturnable<ItemStack> callback) {
+        // getSecondaryOutput is also an idempotent preview API. Only replace it
+        // while a cached recipe is committing output to its owning machine.
+        if (MekanismMachineRollContext.activeMachine() == null) {
+            return;
+        }
         callback.setReturnValue(SawmillSequenceController.next(deterministicChance$recipe)
                 ? deterministicChance$recipe.getSecondaryOutputDefinition().get(0).copy()
                 : ItemStack.EMPTY);

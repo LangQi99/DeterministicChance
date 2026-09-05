@@ -2,9 +2,23 @@
   "required": true,
   "minVersion": "0.8",
   "package": "io.github.langqi99.deterministicchance.mixin",
+  "plugin": "io.github.langqi99.deterministicchance.mixin.DeterministicChanceMixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "mekanism.SawmillChanceOutputMixin"
+    "mekanism.SawmillChanceOutputMixin",
+    "mekanism.PrecisionSawmillCachedRecipeMixin",
+    "mekanism.SawingFactoryCachedRecipeMixin",
+    "mekanism.OneInputCachedRecipeMixin",
+    "create.ProcessingRecipeMixin",
+    "create.MillstoneBlockEntityMixin",
+    "create.CrushingWheelControllerBlockEntityMixin",
+    "thermal.MachineBlockEntityMixin",
+    "gtceu.GTCEu7RecipeRunnerMixin",
+    "immersiveengineering.MultiblockProcessInvoker",
+    "immersiveengineering.MultiblockProcessMixin",
+    "immersiveengineering.CrusherRecipeMixin",
+    "immersiveengineering.ArcFurnaceRecipeMixin",
+    "immersiveengineering.MultiblockStateMixin"
   ],
   "client": [
     "ae2.EncodePatternTransferHandlerMixin"

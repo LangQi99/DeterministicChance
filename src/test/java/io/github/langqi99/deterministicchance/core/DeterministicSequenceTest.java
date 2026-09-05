@@ -29,5 +29,10 @@ class DeterministicSequenceTest {
     void convertsRecipeDecimalChanceToReducedFraction() {
         assertEquals(new ChanceFraction(1, 4), ChanceFraction.fromDouble(0.25));
         assertEquals(new ChanceFraction(4, 5), ChanceFraction.fromDouble(0.8));
+        assertEquals(new ChanceFraction(1, 3), ChanceFraction.fromDouble(1.0 / 3.0));
+        assertEquals(new ChanceFraction(333, 1_000), ChanceFraction.fromDouble(0.333));
+        assertEquals(new ChanceFraction(1, 10), ChanceFraction.fromFloat(0.1F));
+        assertEquals(new ChanceFraction(1, 3), ChanceFraction.fromFloat(1F / 3F));
+        assertEquals(new ChanceFraction(333, 1_000), ChanceFraction.fromFloat(0.333F));
     }
 }

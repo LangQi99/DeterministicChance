@@ -1,0 +1,3 @@
+{
+  "gui.deterministic_chance.exact_batch_unsupported": "无法编码精确的确定性批次：%s"
+}
