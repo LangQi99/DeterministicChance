@@ -31,8 +31,10 @@ jobs:
             runtime_thermal: "false"
             runtime_gtceu: "false"
             runtime_immersive_engineering: "false"
+            runtime_productive_bees: "false"
+            runtime_integrated_dynamics: "false"
             expected_test_mods: ""
-            forbidden_test_mods: "create,mekanism,ae2,jei,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+            forbidden_test_mods: "create,mekanism,ae2,jei,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering,productivebees,productivelib,integrateddynamics,cyclopscore,commoncapabilities"
           - profile: create
             runtime_mekanism: "false"
             runtime_ae2: "true"
@@ -41,8 +43,10 @@ jobs:
             runtime_thermal: "false"
             runtime_gtceu: "false"
             runtime_immersive_engineering: "false"
+            runtime_productive_bees: "false"
+            runtime_integrated_dynamics: "false"
             expected_test_mods: "create,ae2,jei"
-            forbidden_test_mods: "mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+            forbidden_test_mods: "mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering,productivebees,productivelib,integrateddynamics,cyclopscore,commoncapabilities"
           - profile: mekanism
             runtime_mekanism: "true"
             runtime_ae2: "true"
@@ -51,8 +55,10 @@ jobs:
             runtime_thermal: "false"
             runtime_gtceu: "false"
             runtime_immersive_engineering: "false"
+            runtime_productive_bees: "false"
+            runtime_integrated_dynamics: "false"
             expected_test_mods: "mekanism,ae2,jei"
-            forbidden_test_mods: "create,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+            forbidden_test_mods: "create,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering,productivebees,productivelib,integrateddynamics,cyclopscore,commoncapabilities"
           - profile: thermal
             runtime_mekanism: "false"
             runtime_ae2: "true"
@@ -61,8 +67,10 @@ jobs:
             runtime_thermal: "true"
             runtime_gtceu: "false"
             runtime_immersive_engineering: "false"
+            runtime_productive_bees: "false"
+            runtime_integrated_dynamics: "false"
             expected_test_mods: "cofh_core,thermal,thermal_foundation,thermal_expansion,ae2,jei"
-            forbidden_test_mods: "create,mekanism,gtceu,immersiveengineering"
+            forbidden_test_mods: "create,mekanism,gtceu,immersiveengineering,productivebees,productivelib,integrateddynamics,cyclopscore,commoncapabilities"
           - profile: gtceu7
             runtime_mekanism: "false"
             runtime_ae2: "true"
@@ -71,8 +79,10 @@ jobs:
             runtime_thermal: "false"
             runtime_gtceu: "true"
             runtime_immersive_engineering: "false"
+            runtime_productive_bees: "false"
+            runtime_integrated_dynamics: "false"
             expected_test_mods: "gtceu,ae2,jei"
-            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,immersiveengineering"
+            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,immersiveengineering,productivebees,productivelib,integrateddynamics,cyclopscore,commoncapabilities"
           - profile: immersive-engineering
             runtime_mekanism: "false"
             runtime_ae2: "true"
@@ -81,8 +91,34 @@ jobs:
             runtime_thermal: "false"
             runtime_gtceu: "false"
             runtime_immersive_engineering: "true"
+            runtime_productive_bees: "false"
+            runtime_integrated_dynamics: "false"
             expected_test_mods: "immersiveengineering,ae2,jei"
-            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu"
+            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,productivebees,productivelib,integrateddynamics,cyclopscore,commoncapabilities"
+          - profile: productive-bees
+            runtime_mekanism: "false"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "false"
+            runtime_thermal: "false"
+            runtime_gtceu: "false"
+            runtime_immersive_engineering: "false"
+            runtime_productive_bees: "true"
+            runtime_integrated_dynamics: "false"
+            expected_test_mods: "productivebees,productivelib,ae2,jei"
+            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering,integrateddynamics,cyclopscore,commoncapabilities"
+          - profile: integrated-dynamics
+            runtime_mekanism: "false"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "false"
+            runtime_thermal: "false"
+            runtime_gtceu: "false"
+            runtime_immersive_engineering: "false"
+            runtime_productive_bees: "false"
+            runtime_integrated_dynamics: "true"
+            expected_test_mods: "integrateddynamics,cyclopscore,commoncapabilities,ae2,jei"
+            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering,productivebees,productivelib"
           - profile: full
             runtime_mekanism: "true"
             runtime_ae2: "true"
@@ -91,7 +127,9 @@ jobs:
             runtime_thermal: "true"
             runtime_gtceu: "true"
             runtime_immersive_engineering: "true"
-            expected_test_mods: "create,mekanism,ae2,jei,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+            runtime_productive_bees: "true"
+            runtime_integrated_dynamics: "true"
+            expected_test_mods: "create,mekanism,ae2,jei,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering,productivebees,productivelib,integrateddynamics,cyclopscore,commoncapabilities"
             forbidden_test_mods: ""
     steps:
       - uses: actions/checkout@v4
@@ -110,5 +148,7 @@ jobs:
             -Pruntime_thermal="${{ matrix.runtime_thermal }}" \
             -Pruntime_gtceu="${{ matrix.runtime_gtceu }}" \
             -Pruntime_immersive_engineering="${{ matrix.runtime_immersive_engineering }}" \
+            -Pruntime_productive_bees="${{ matrix.runtime_productive_bees }}" \
+            -Pruntime_integrated_dynamics="${{ matrix.runtime_integrated_dynamics }}" \
             -Pexpected_test_mods="${{ matrix.expected_test_mods }}" \
             -Pforbidden_test_mods="${{ matrix.forbidden_test_mods }}"

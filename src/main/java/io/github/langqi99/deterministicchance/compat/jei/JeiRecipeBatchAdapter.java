@@ -2,6 +2,7 @@ package io.github.langqi99.deterministicchance.compat.jei;
 
 import java.util.List;
 import java.util.Optional;
+import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 
 /** Thin optional-mod bridge from one native recipe family to the common planner. */
 public interface JeiRecipeBatchAdapter {
@@ -17,6 +18,11 @@ public interface JeiRecipeBatchAdapter {
         return outputs(recipe).stream().anyMatch(output -> !output.chance().isCertain());
     }
 
+    /** Context-aware counterpart for recipe families whose JEI categories expose different outputs. */
+    default boolean hasProbabilisticOutputs(Object recipe, IRecipeSlotsView slotsView) {
+        return outputs(recipe, slotsView).stream().anyMatch(output -> !output.chance().isCertain());
+    }
+
     /**
      * Explains why a recognized recipe cannot be represented as one exact AE2
      * batch. The registry turns this into a visible transfer error instead of
@@ -26,5 +32,13 @@ public interface JeiRecipeBatchAdapter {
         return Optional.empty();
     }
 
+    default Optional<String> exactBatchUnsupportedReason(Object recipe, IRecipeSlotsView slotsView) {
+        return exactBatchUnsupportedReason(recipe);
+    }
+
     List<ChanceStack> outputs(Object recipe);
+
+    default List<ChanceStack> outputs(Object recipe, IRecipeSlotsView slotsView) {
+        return outputs(recipe);
+    }
 }

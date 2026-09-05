@@ -32,7 +32,15 @@ public final class JeiRecipeBatchAdapterRegistry {
                             "blusunrize.immersiveengineering.api.crafting.CrusherRecipe",
                             "blusunrize.immersiveengineering.api.crafting.ArcFurnaceRecipe"),
                     "io.github.langqi99.deterministicchance.compat.immersiveengineering."
-                            + "ImmersiveEngineeringJeiAdapter"));
+                            + "ImmersiveEngineeringJeiAdapter"),
+            new Registration(
+                    List.of("cy.jdkdigital.productivebees.common.recipe.CentrifugeRecipe"),
+                    "io.github.langqi99.deterministicchance.compat.productivebees."
+                            + "ProductiveBeesCentrifugeJeiAdapter"),
+            new Registration(
+                    List.of("org.cyclops.integrateddynamics.core.recipe.type.RecipeMechanicalSqueezer"),
+                    "io.github.langqi99.deterministicchance.compat.integrateddynamics."
+                            + "IntegratedDynamicsSqueezerJeiAdapter"));
 
     private static volatile List<JeiRecipeBatchAdapter> loadedAdapters;
 
@@ -51,7 +59,34 @@ public final class JeiRecipeBatchAdapterRegistry {
     }
 
     public static JeiBatchDecision decide(Object recipe, IRecipeSlotsView slotsView) {
-        return decide(recipe, GenericEntryStackHelper.ofInputs(slotsView));
+        List<List<GenericStack>> inputs = GenericEntryStackHelper.ofInputs(slotsView);
+        for (JeiRecipeBatchAdapter adapter : adapters()) {
+            try {
+                if (!adapter.supports(recipe)) {
+                    continue;
+                }
+                if (!adapter.hasProbabilisticOutputs(recipe, slotsView)) {
+                    return JeiBatchDecision.notApplicable();
+                }
+                Optional<String> unsupportedReason =
+                        adapter.exactBatchUnsupportedReason(recipe, slotsView);
+                if (unsupportedReason.isPresent()) {
+                    return JeiBatchDecision.unsupported(unsupportedReason.get());
+                }
+                List<List<GenericStack>> effectiveInputs =
+                        adapter instanceof NativeInputJeiRecipeBatchAdapter nativeInputs
+                                ? nativeInputs.inputs(recipe)
+                                : inputs;
+                return JeiBatchDecision.exact(JeiBatchPlanner.plan(
+                        effectiveInputs,
+                        adapter.outputs(recipe, slotsView)));
+            } catch (IllegalArgumentException | ArithmeticException exception) {
+                return unsupported(recipe, adapter, exception);
+            } catch (LinkageError error) {
+                return incompatible(adapter, error);
+            }
+        }
+        return JeiBatchDecision.notApplicable();
     }
 
     /** Public overload used by GameTests to inspect exact/unsupported behavior. */
@@ -77,22 +112,33 @@ public final class JeiRecipeBatchAdapterRegistry {
                         : inputs;
                 return JeiBatchDecision.exact(JeiBatchPlanner.plan(effectiveInputs, outputs));
             } catch (IllegalArgumentException | ArithmeticException exception) {
-                DeterministicChance.LOGGER.warn(
-                        "Cannot create an exact AE2 batch for recipe {} with adapter {}: {}",
-                        recipe,
-                        adapter.getClass().getName(),
-                        exception.getMessage());
-                return JeiBatchDecision.unsupported(exception.getMessage());
+                return unsupported(recipe, adapter, exception);
             } catch (LinkageError error) {
-                DeterministicChance.LOGGER.error(
-                        "Optional recipe adapter {} is incompatible with the loaded mod version",
-                        adapter.getClass().getName(),
-                        error);
-                return JeiBatchDecision.unsupported(
-                        "the loaded optional mod version is incompatible with this adapter");
+                return incompatible(adapter, error);
             }
         }
         return JeiBatchDecision.notApplicable();
+    }
+
+    private static JeiBatchDecision unsupported(
+            Object recipe,
+            JeiRecipeBatchAdapter adapter,
+            RuntimeException exception) {
+        DeterministicChance.LOGGER.warn(
+                "Cannot create an exact AE2 batch for recipe {} with adapter {}: {}",
+                recipe,
+                adapter.getClass().getName(),
+                exception.getMessage());
+        return JeiBatchDecision.unsupported(exception.getMessage());
+    }
+
+    private static JeiBatchDecision incompatible(JeiRecipeBatchAdapter adapter, LinkageError error) {
+        DeterministicChance.LOGGER.error(
+                "Optional recipe adapter {} is incompatible with the loaded mod version",
+                adapter.getClass().getName(),
+                error);
+        return JeiBatchDecision.unsupported(
+                "the loaded optional mod version is incompatible with this adapter");
     }
 
     public static List<String> loadedAdapterNames() {

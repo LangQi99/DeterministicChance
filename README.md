@@ -62,6 +62,8 @@ AE 样板：5 A → 4 B
 | Thermal Series | 中央机器输出提交路径 | 仅支持不会被催化剂/增强动态改变的锁定概率 | 可催化或可动态加成的 JEI 配方会明确拒绝，避免生成错误样板 |
 | GTCEu Modern 7 | 已建模的独立 `OR` 概率输出 | 仅固定数量、固定概率且跨电压等级概率不变的独立 `OR` 输出 | `AND`、`XOR`、`FIRST`、范围数量、tick 输出或等级加成等不冒充精确结果 |
 | Immersive Engineering | 粉碎机、标准电弧炉配方 | 支持 Crusher 与标准 Arc Furnace 概率副产物；电弧炉按配方/JEI 展示的概率语义修正原版反向比较 | 预览不推进相位，只有机器提交结果时才推进 |
+| Productive Bees | 普通、动力与加热离心机 | 支持多个独立产物、`min..max` 数量范围、0–100% 概率及固定流体副产物 | 加热离心机会按实际语义去蜡；JEI 类别由真实输出槽区分；修正上游 `<=` 导致的 0% 仍可能产出问题 |
+| Integrated Dynamics | 机械挤压机（Mechanical Squeezer） | 支持多个独立、固定数量的概率物品产物及固定流体产物 | 只覆盖可自动化的机械挤压机；脚踩式 Squeezer 不属于普通 AE2 处理链路 |
 
 AE2 与 JEI 也都是可选依赖：只有需要“JEI 一键写入 AE2 样板”时才需要同时安装它们。
 
@@ -116,6 +118,8 @@ Forge dedicated GameTest 没有客户端 JEI 界面，因而不能自动点击 J
 | Thermal Series（可选） | 1.20.1 11.x |
 | GTCEu Modern（可选） | 7.5.3 |
 | Immersive Engineering（可选） | 10.2.0-183 |
+| Productive Bees（可选） | 1.20.1-12.6.0 |
+| Integrated Dynamics（可选） | 1.30.8 |
 
 构建所用的精确版本见 [`gradle.properties`](gradle.properties)，生产模组元数据仍将各项集成声明为可选。
 
