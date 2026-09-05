@@ -58,7 +58,7 @@ AE 样板：5 A → 4 B
 | 模组 | 机器确定化 | JEI → AE2 精确样板 | 当前边界 |
 | --- | --- | --- | --- |
 | Mekanism | 精密锯木机、锯木工厂 | 支持锯切概率副产物 | 状态按具体机器隔离并持久化 |
-| Create | 磨石（Milling）、粉碎轮（Crushing） | 支持这两类 Processing 配方 | 风扇处理、工作盆、手动应用、砂纸等暂不处理 |
+| Create | 磨石、粉碎轮、序列组装 | Milling/Crushing 的独立概率产物；Sequenced Assembly 的互斥权重池及完整步骤消耗 | 序列组装覆盖压制、切割、部署、注液结尾；标准 `create:sequenced_assembly` KubeJS 配方无需额外依赖即可兼容 |
 | Thermal Series | 中央机器输出提交路径 | 仅支持不会被催化剂/增强动态改变的锁定概率 | 可催化或可动态加成的 JEI 配方会明确拒绝，避免生成错误样板 |
 | GTCEu Modern 7 | 已建模的独立 `OR` 概率输出 | 仅固定数量、固定概率且跨电压等级概率不变的独立 `OR` 输出 | `AND`、`XOR`、`FIRST`、范围数量、tick 输出或等级加成等不冒充精确结果 |
 | Immersive Engineering | 粉碎机、标准电弧炉配方 | 支持 Crusher 与标准 Arc Furnace 概率副产物；电弧炉按配方/JEI 展示的概率语义修正原版反向比较 | 预览不推进相位，只有机器提交结果时才推进 |
@@ -92,6 +92,10 @@ JEI 适配结果分成三种状态：
 - Industrial Foregoing：常见相关机制是动态结果、无消耗输入或方块破坏概率，目前没有值得信赖的统一静态概率输出接口。
 
 这些边界不是“找不到概率字段”，而是无法同时保证 JEI 样板与真实机器执行严格相等。只有能建立稳定机器上下文和精确配方语义时才会加入。
+
+### KubeJS / 数据包配方
+
+本模组不绑定 KubeJS API。KubeJS 或数据包只要最终注册成原生 `create:milling`、`create:crushing` 或 `create:sequenced_assembly`，就和 Create 自带配方走同一个适配器。序列组装支持整数或小数权重、多种互斥回收结果、loops、部署消耗品与注液输入。脚本在运行时回调中自行随机产出、替换原生 serializer，或在机器提交后再次改写结果时无法静态证明，JEI 精确样板不会假装支持。
 
 ## 测试
 

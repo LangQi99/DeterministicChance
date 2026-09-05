@@ -8,7 +8,11 @@ import com.simibubi.create.content.kinetics.millstone.MillingRecipe;
 import com.simibubi.create.content.kinetics.millstone.MillstoneBlockEntity;
 import com.simibubi.create.content.processing.recipe.ProcessingOutput;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipe;
+import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
+import com.simibubi.create.content.processing.sequenced.SequencedRecipe;
+import io.github.langqi99.deterministicchance.compat.create.CreateMachineRollContext;
 import io.github.langqi99.deterministicchance.compat.create.ProcessingOutputSequenceController;
+import io.github.langqi99.deterministicchance.compat.create.SequencedAssemblySequenceController;
 import io.github.langqi99.deterministicchance.core.ChanceFraction;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -79,7 +83,74 @@ public final class CreateMachineGameTestCase {
 
         verifyIndependentMachineStartsFresh(helper, fixture);
         verifyCrushingWheelCommitPath(helper);
+        verifySequencedAssemblyCommitAndPersistence(helper);
         helper.succeed();
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void verifySequencedAssemblyCommitAndPersistence(GameTestHelper helper) {
+        SequencedAssemblyRecipe recipe = helper.getLevel().getRecipeManager().getRecipes().stream()
+                .filter(SequencedAssemblyRecipe.class::isInstance)
+                .map(SequencedAssemblyRecipe.class::cast)
+                .filter(candidate -> candidate.resultPool.size() > 1)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Create has no weighted sequenced assembly fixture"));
+        var cycle = SequencedAssemblySequenceController.cycle(recipe.resultPool);
+        BlockPos position = helper.absolutePos(new BlockPos(2, 1, 2));
+        helper.getLevel().setBlock(position, AllBlocks.MILLSTONE.getDefaultState(), 3);
+        MillstoneBlockEntity machine = requireMillstone(helper, position);
+
+        ItemStack finalIntermediate = recipe.getTransitionalItem().copy();
+        CompoundTag assembly = new CompoundTag();
+        assembly.putString("id", recipe.getId().toString());
+        int finalStep = recipe.getSequence().size() * recipe.getLoops() - 1;
+        assembly.putInt("Step", finalStep);
+        assembly.putFloat("Progress", (float) finalStep / (recipe.getSequence().size() * recipe.getLoops()));
+        finalIntermediate.getOrCreateTag().put("SequencedAssembly", assembly);
+
+        SequencedRecipe<?> last = recipe.getSequence().get(finalStep % recipe.getSequence().size());
+        ProcessingRecipe<?> prototype = last.getRecipe();
+        long[] counts = new long[recipe.resultPool.size()];
+        for (int execution = 0; execution < cycle.totalWeight(); execution++) {
+            Optional<ProcessingRecipe<?>> resolvedRecipe = (Optional<ProcessingRecipe<?>>) (Optional<?>)
+                    SequencedAssemblyRecipe.getRecipe(
+                            helper.getLevel(),
+                            finalIntermediate.copy(),
+                            (net.minecraft.world.item.crafting.RecipeType) prototype.getType(),
+                            (Class) prototype.getClass());
+            ProcessingRecipe<?> resolved = resolvedRecipe
+                    .orElseThrow(() -> new AssertionError("Create did not resolve final assembly step"));
+            MillstoneBlockEntity currentMachine = machine;
+            List<ItemStack> outputs = CreateMachineRollContext.withMachine(
+                    currentMachine, resolved::rollResults);
+            helper.assertTrue(outputs.size() == 1, "Final assembly step did not return exactly one result");
+            ItemStack output = outputs.get(0);
+            for (int index = 0; index < recipe.resultPool.size(); index++) {
+                if (ItemStack.isSameItemSameTags(output, recipe.resultPool.get(index).getStack())) {
+                    counts[index] += output.getCount();
+                }
+            }
+
+            if (execution == 0 && cycle.totalWeight() > 1) {
+                CompoundTag saved = machine.saveWithoutMetadata();
+                helper.getLevel().setBlock(position, Blocks.AIR.defaultBlockState(), 3);
+                helper.getLevel().setBlock(position, AllBlocks.MILLSTONE.getDefaultState(), 3);
+                machine = requireMillstone(helper, position);
+                machine.load(saved);
+            }
+        }
+        for (int index = 0; index < counts.length; index++) {
+            long expected = Math.multiplyExact(
+                    recipe.resultPool.get(index).getStack().getCount(), cycle.weight(index));
+            helper.assertTrue(
+                    counts[index] == expected,
+                    "Sequenced assembly " + recipe.getId() + " output " + index
+                            + " produced " + counts[index] + "; expected " + expected);
+        }
+        helper.assertTrue(
+                !machine.getPersistentData().contains(
+                        SequencedAssemblySequenceController.ROOT_TAG, Tag.TAG_COMPOUND),
+                "Create assembly retained stale state after a complete weighted cycle");
     }
 
     private static Fixture findFixture(GameTestHelper helper) {

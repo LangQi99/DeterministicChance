@@ -20,6 +20,9 @@ public final class JeiRecipeBatchAdapterRegistry {
                     List.of("com.simibubi.create.content.processing.recipe.ProcessingRecipe"),
                     "io.github.langqi99.deterministicchance.compat.create.CreateProcessingJeiAdapter"),
             new Registration(
+                    List.of("com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe"),
+                    "io.github.langqi99.deterministicchance.compat.create.CreateSequencedAssemblyJeiAdapter"),
+            new Registration(
                     List.of("cofh.thermal.lib.util.recipes.ThermalRecipe"),
                     "io.github.langqi99.deterministicchance.compat.thermal.ThermalRecipeJeiAdapter"),
             new Registration(
