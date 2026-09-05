@@ -15,3 +15,100 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew build --no-daemon
+
+  gametest:
+    name: GameTest (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: core
+            runtime_mekanism: "false"
+            runtime_ae2: "false"
+            runtime_jei: "false"
+            runtime_create: "false"
+            runtime_thermal: "false"
+            runtime_gtceu: "false"
+            runtime_immersive_engineering: "false"
+            expected_test_mods: ""
+            forbidden_test_mods: "create,mekanism,ae2,jei,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+          - profile: create
+            runtime_mekanism: "false"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "true"
+            runtime_thermal: "false"
+            runtime_gtceu: "false"
+            runtime_immersive_engineering: "false"
+            expected_test_mods: "create,ae2,jei"
+            forbidden_test_mods: "mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+          - profile: mekanism
+            runtime_mekanism: "true"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "false"
+            runtime_thermal: "false"
+            runtime_gtceu: "false"
+            runtime_immersive_engineering: "false"
+            expected_test_mods: "mekanism,ae2,jei"
+            forbidden_test_mods: "create,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+          - profile: thermal
+            runtime_mekanism: "false"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "false"
+            runtime_thermal: "true"
+            runtime_gtceu: "false"
+            runtime_immersive_engineering: "false"
+            expected_test_mods: "cofh_core,thermal,thermal_foundation,thermal_expansion,ae2,jei"
+            forbidden_test_mods: "create,mekanism,gtceu,immersiveengineering"
+          - profile: gtceu7
+            runtime_mekanism: "false"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "false"
+            runtime_thermal: "false"
+            runtime_gtceu: "true"
+            runtime_immersive_engineering: "false"
+            expected_test_mods: "gtceu,ae2,jei"
+            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,immersiveengineering"
+          - profile: immersive-engineering
+            runtime_mekanism: "false"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "false"
+            runtime_thermal: "false"
+            runtime_gtceu: "false"
+            runtime_immersive_engineering: "true"
+            expected_test_mods: "immersiveengineering,ae2,jei"
+            forbidden_test_mods: "create,mekanism,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu"
+          - profile: full
+            runtime_mekanism: "true"
+            runtime_ae2: "true"
+            runtime_jei: "true"
+            runtime_create: "true"
+            runtime_thermal: "true"
+            runtime_gtceu: "true"
+            runtime_immersive_engineering: "true"
+            expected_test_mods: "create,mekanism,ae2,jei,cofh_core,thermal,thermal_foundation,thermal_expansion,gtceu,immersiveengineering"
+            forbidden_test_mods: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Run Forge GameTests
+        run: |
+          ./gradlew verifyGameTests --no-daemon \
+            -Pruntime_mekanism="${{ matrix.runtime_mekanism }}" \
+            -Pruntime_ae2="${{ matrix.runtime_ae2 }}" \
+            -Pruntime_jei="${{ matrix.runtime_jei }}" \
+            -Pruntime_create="${{ matrix.runtime_create }}" \
+            -Pruntime_thermal="${{ matrix.runtime_thermal }}" \
+            -Pruntime_gtceu="${{ matrix.runtime_gtceu }}" \
+            -Pruntime_immersive_engineering="${{ matrix.runtime_immersive_engineering }}" \
+            -Pexpected_test_mods="${{ matrix.expected_test_mods }}" \
+            -Pforbidden_test_mods="${{ matrix.forbidden_test_mods }}"

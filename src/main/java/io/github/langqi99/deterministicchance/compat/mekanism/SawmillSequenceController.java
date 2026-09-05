@@ -2,40 +2,63 @@ package io.github.langqi99.deterministicchance.compat.mekanism;
 
 import io.github.langqi99.deterministicchance.core.ChanceFraction;
 import io.github.langqi99.deterministicchance.core.DeterministicSequence;
-import java.util.Collections;
-import java.util.Map;
-import java.util.WeakHashMap;
 import mekanism.api.recipes.SawmillRecipe;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
- * Owns the deterministic phase for each loaded sawmill recipe.
+ * Owns the deterministic phase for each sawmill machine and recipe.
  *
- * <p>Mekanism creates one recipe object per recipe id and calls the chance-output methods only
- * when an operation is actually committed, so this does not consume the sequence during output
- * space simulation. A later persistence layer will move the phase from recipe scope to machine
- * scope; recipe scope is intentionally sufficient for the single-machine integration world.</p>
+ * <p>The cached-recipe mixins establish the current machine only around committed output
+ * insertion. The runtime path is therefore machine-scoped and persisted in ForgeData;
+ * calls outside that commit context retain Mekanism's native preview semantics.</p>
  */
 public final class SawmillSequenceController {
-    private static final Map<SawmillRecipe, DeterministicSequence> SEQUENCES =
-            Collections.synchronizedMap(new WeakHashMap<>());
+    private static final String ROOT_TAG = "DeterministicChanceMekanismSawmill";
+    private static final String STATES_TAG = "States";
 
     private SawmillSequenceController() {
     }
 
     public static boolean next(SawmillRecipe recipe) {
-        double chance = recipe.getSecondaryChance();
-        if (chance <= 0) {
-            return false;
+        ChanceFraction chance = ChanceFraction.fromDouble(recipe.getSecondaryChance());
+        BlockEntity machine = MekanismMachineRollContext.activeMachine();
+        if (machine == null) {
+            throw new IllegalStateException("Mekanism chance roll has no active machine owner");
         }
-        if (chance >= 1) {
-            return true;
+        if (recipe.getId() == null) {
+            throw new IllegalArgumentException("Mekanism sawmill recipe has no id");
         }
-        DeterministicSequence sequence = SEQUENCES.computeIfAbsent(
-                recipe, ignored -> new DeterministicSequence(ChanceFraction.fromDouble(chance)));
-        return sequence.next();
-    }
 
-    static void resetForTests() {
-        SEQUENCES.clear();
+        CompoundTag persistentData = machine.getPersistentData();
+        CompoundTag root = persistentData.getCompound(ROOT_TAG);
+        CompoundTag states = root.getCompound(STATES_TAG);
+        String recipeId = recipe.getId().toString();
+        CompoundTag state = states.getCompound(recipeId);
+
+        long position = 0;
+        if (state.getLong("Numerator") == chance.numerator()
+                && state.getLong("Denominator") == chance.denominator()) {
+            position = state.getLong("Position");
+        }
+
+        DeterministicSequence sequence = new DeterministicSequence(chance, position);
+        boolean result = sequence.next();
+        if (sequence.position() == 0) {
+            states.remove(recipeId);
+        } else {
+            state.putLong("Numerator", chance.numerator());
+            state.putLong("Denominator", chance.denominator());
+            state.putLong("Position", sequence.position());
+            states.put(recipeId, state);
+        }
+        if (states.isEmpty()) {
+            persistentData.remove(ROOT_TAG);
+        } else {
+            root.put(STATES_TAG, states);
+            persistentData.put(ROOT_TAG, root);
+        }
+        machine.setChanged();
+        return result;
     }
 }

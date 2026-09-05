@@ -13,14 +13,8 @@ public final class DeterministicBatchPlanner {
             throw new IllegalArgumentException("maxExecutions must be positive");
         }
 
-        long executions = 1;
-        for (var output : recipe.outputs()) {
-            executions = lcm(executions, output.chance().denominator());
-            if (executions > maxExecutions) {
-                throw new IllegalArgumentException(
-                        "exact batch requires " + executions + " executions; limit is " + maxExecutions);
-            }
-        }
+        long executions = minimumExecutions(
+                recipe.outputs().stream().map(ProbabilityOutput::chance).toList(), maxExecutions);
 
         Map<K, Long> inputs = new LinkedHashMap<>();
         for (var input : recipe.inputs()) {
@@ -41,11 +35,31 @@ public final class DeterministicBatchPlanner {
         return new DeterministicBatchPlan<>(recipe.recipeId(), executions, inputs, outputs);
     }
 
+    /** Returns the smallest number of executions that makes every expected output integral. */
+    public static long minimumExecutions(Iterable<ChanceFraction> chances, long maxExecutions) {
+        if (maxExecutions <= 0) {
+            throw new IllegalArgumentException("maxExecutions must be positive");
+        }
+
+        long executions = 1;
+        for (ChanceFraction chance : chances) {
+            executions = lcm(executions, chance.denominator());
+            if (executions > maxExecutions) {
+                throw new IllegalArgumentException(
+                        "exact batch requires " + executions + " executions; limit is " + maxExecutions);
+            }
+        }
+        return executions;
+    }
+
     private static <K> void merge(Map<K, Long> values, K key, long amount) {
         values.merge(key, amount, Math::addExact);
     }
 
-    private static long lcm(long a, long b) {
+    public static long lcm(long a, long b) {
+        if (a <= 0 || b <= 0) {
+            throw new IllegalArgumentException("lcm operands must be positive");
+        }
         return Math.multiplyExact(a / gcd(a, b), b);
     }
 
