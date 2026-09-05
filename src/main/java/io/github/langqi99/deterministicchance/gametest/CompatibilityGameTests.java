@@ -47,6 +47,18 @@ public final class CompatibilityGameTests {
     private static final String IE_JEI_TEST =
             "io.github.langqi99.deterministicchance.gametest.immersiveengineering."
                     + "ImmersiveEngineeringJeiGameTestCase";
+    private static final String PRODUCTIVE_BEES_MACHINE_TEST =
+            "io.github.langqi99.deterministicchance.gametest.productivebees."
+                    + "ProductiveBeesMachineGameTestCase";
+    private static final String PRODUCTIVE_BEES_JEI_TEST =
+            "io.github.langqi99.deterministicchance.gametest.productivebees."
+                    + "ProductiveBeesJeiGameTestCase";
+    private static final String INTEGRATED_DYNAMICS_MACHINE_TEST =
+            "io.github.langqi99.deterministicchance.gametest.integrateddynamics."
+                    + "IntegratedDynamicsMachineGameTestCase";
+    private static final String INTEGRATED_DYNAMICS_JEI_TEST =
+            "io.github.langqi99.deterministicchance.gametest.integrateddynamics."
+                    + "IntegratedDynamicsJeiGameTestCase";
 
     private CompatibilityGameTests() {
     }
@@ -138,6 +150,39 @@ public final class CompatibilityGameTests {
                 helper,
                 new String[] {"immersiveengineering", "ae2", "jei"},
                 IE_JEI_TEST,
+                "run");
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void productiveBeesCentrifugeUsesExactPersistentSequences(GameTestHelper helper) {
+        runWhenLoaded(helper, new String[] {"productivebees"}, PRODUCTIVE_BEES_MACHINE_TEST, "run");
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void productiveBeesJeiTransferBuildsExactAePattern(GameTestHelper helper) {
+        runWhenLoaded(
+                helper,
+                new String[] {"productivebees", "ae2", "jei"},
+                PRODUCTIVE_BEES_JEI_TEST,
+                "run");
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void integratedDynamicsMechanicalSqueezerUsesExactPersistentSequence(
+            GameTestHelper helper) {
+        runWhenLoaded(
+                helper,
+                new String[] {"integrateddynamics"},
+                INTEGRATED_DYNAMICS_MACHINE_TEST,
+                "run");
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void integratedDynamicsJeiTransferBuildsExactAePattern(GameTestHelper helper) {
+        runWhenLoaded(
+                helper,
+                new String[] {"integrateddynamics", "ae2", "jei"},
+                INTEGRATED_DYNAMICS_JEI_TEST,
                 "run");
     }
 

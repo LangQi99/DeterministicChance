@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.fluids.FluidStack;
 
-/** One adapter covers milling, crushing, splashing, haunting and other ProcessingRecipes. */
+/** Recognizes ProcessingRecipes and accepts only families with a matching commit hook. */
 public final class CreateProcessingJeiAdapter implements NativeInputJeiRecipeBatchAdapter {
     @Override
     public boolean supports(Object recipe) {

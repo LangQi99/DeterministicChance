@@ -61,6 +61,13 @@ repositories {
     maven { url = "https://maven.covers1624.net" }
     maven { url = "https://maven.firstdark.dev/snapshots" }
     maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+    maven {
         name = "GTCEu"
         url = "https://maven.gtceu.com"
         content {
@@ -74,6 +81,13 @@ repositories {
         }
     }
 }
+
+configurations {
+    productiveBeesBundle
+}
+
+def productiveLibOutput = layout.projectDirectory.file(
+        ".gradle/productive-bees-libs/productivelib-1.20.1-0.0.4.jar").asFile
 
 dependencies {
     minecraft "net.minecraft:minecraft:${minecraft_version}"
@@ -165,6 +179,60 @@ dependencies {
     }
     if (property("runtime_immersive_engineering").toBoolean()) {
         modRuntimeOnly("curse.maven:immersive-engineering-231951:${immersive_engineering_file_id}") {
+            transitive = false
+        }
+    }
+
+    productiveBeesBundle("maven.modrinth:productivebees:${productive_bees_version}") {
+        transitive = false
+    }
+    // Productive Bees embeds ProductiveLib in its production jar. Forge
+    // expands it in normal installations, while Loom's flat development
+    // classpath does not, so expose the exact embedded jar to compile/tests.
+    if (!productiveLibOutput.exists()) {
+        productiveLibOutput.parentFile.mkdirs()
+        def bundle = new java.util.zip.ZipFile(configurations.productiveBeesBundle.singleFile)
+        try {
+            def entry = bundle.getEntry("META-INF/jarjar/productivelib-1.20.1-0.0.4.jar")
+            if (entry == null) {
+                throw new GradleException("Productive Bees no longer embeds ProductiveLib 1.20.1-0.0.4")
+            }
+            productiveLibOutput.withOutputStream { output ->
+                bundle.getInputStream(entry).withCloseable { input -> output << input }
+            }
+        } finally {
+            bundle.close()
+        }
+    }
+    def productiveLibClasspath = files(productiveLibOutput)
+    modCompileOnly("maven.modrinth:productivebees:${productive_bees_version}") {
+        transitive = false
+    }
+    modCompileOnly productiveLibClasspath
+    if (property("runtime_productive_bees").toBoolean()) {
+        modRuntimeOnly("maven.modrinth:productivebees:${productive_bees_version}") {
+            transitive = false
+        }
+        modRuntimeOnly productiveLibClasspath
+    }
+
+    modCompileOnly("curse.maven:integrated-dynamics-236307:${integrated_dynamics_file_id}") {
+        transitive = false
+    }
+    modCompileOnly("curse.maven:cyclops-core-232758:${cyclops_core_file_id}") {
+        transitive = false
+    }
+    modCompileOnly("curse.maven:common-capabilities-247007:${common_capabilities_file_id}") {
+        transitive = false
+    }
+    if (property("runtime_integrated_dynamics").toBoolean()) {
+        modRuntimeOnly("curse.maven:integrated-dynamics-236307:${integrated_dynamics_file_id}") {
+            transitive = false
+        }
+        modRuntimeOnly("curse.maven:cyclops-core-232758:${cyclops_core_file_id}") {
+            transitive = false
+        }
+        modRuntimeOnly("curse.maven:common-capabilities-247007:${common_capabilities_file_id}") {
             transitive = false
         }
     }

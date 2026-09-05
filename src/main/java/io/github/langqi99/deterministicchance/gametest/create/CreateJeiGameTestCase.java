@@ -6,6 +6,9 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import com.simibubi.create.content.processing.recipe.ProcessingOutput;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipe;
+import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
+import io.github.langqi99.deterministicchance.compat.create.CreateSequencedAssemblyJeiAdapter;
+import io.github.langqi99.deterministicchance.compat.create.SequencedAssemblySequenceController;
 import io.github.langqi99.deterministicchance.compat.create.CreateProcessingJeiAdapter;
 import io.github.langqi99.deterministicchance.compat.create.CreateRecipeSupport;
 import io.github.langqi99.deterministicchance.compat.jei.JeiRecipeBatchAdapterRegistry;
@@ -44,7 +47,34 @@ public final class CreateJeiGameTestCase {
                 nativeInputs,
                 expectedOutputs,
                 "Create recipe " + fixture.recipe().getId());
+        verifySequencedAssembly(helper);
         helper.succeed();
+    }
+
+    private static void verifySequencedAssembly(GameTestHelper helper) {
+        SequencedAssemblyRecipe recipe = helper.getLevel().getRecipeManager().getRecipes().stream()
+                .filter(SequencedAssemblyRecipe.class::isInstance)
+                .map(SequencedAssemblyRecipe.class::cast)
+                .filter(candidate -> candidate.resultPool.size() > 1)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Create has no weighted sequenced assembly fixture"));
+        var adapter = new CreateSequencedAssemblyJeiAdapter();
+        var cycle = SequencedAssemblySequenceController.cycle(recipe.resultPool);
+        Map<AEKey, Long> expected = new LinkedHashMap<>();
+        for (int index = 0; index < recipe.resultPool.size(); index++) {
+            ItemStack stack = recipe.resultPool.get(index).getStack();
+            long amount = Math.multiplyExact(stack.getCount(), cycle.weight(index));
+            if (!stack.isEmpty() && amount > 0) {
+                expected.merge(Objects.requireNonNull(AEItemKey.of(stack)), amount, Math::addExact);
+            }
+        }
+        AePatternPlanAssertions.assertExactPlanAndEncodedPattern(
+                helper,
+                JeiRecipeBatchAdapterRegistry.plan(recipe, List.of()),
+                cycle.totalWeight(),
+                adapter.inputs(recipe),
+                expected,
+                "Create sequenced assembly " + recipe.getId());
     }
 
     private static Fixture findFixture(GameTestHelper helper) {

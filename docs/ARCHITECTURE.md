@@ -104,10 +104,16 @@ AE2 的一张精确批次样板，应由**同一个 provider 投入一台机器*
 | 家族 | 机器提交范围 | JEI 精确范围 | 关键拒绝条件 |
 | --- | --- | --- | --- |
 | Mekanism | Precision Sawmill 与 Sawing Factory | Sawing 的固定主产物及概率副产物 | 不属于锯切家族 |
-| Create | Milling 与 Crushing | 这两类 ProcessingRecipe 的原生输入和概率输出 | Fan、Basin、Manual Application、Sandpaper 等无已建模单机提交上下文的路径 |
+| Create | Milling、Crushing，以及 Sequenced Assembly 最后一步的 Press/Saw/Deployer/Spout 提交 | Milling/Crushing 独立概率输出；序列组装互斥权重池、loops 和各步骤真实消耗 | Fan、Basin、Manual Application、Sandpaper；非原生 serializer 或运行时脚本回调改写的动态结果 |
 | Thermal Series | 通用 MachineBlockEntity 输出提交路径 | 概率被配方锁定、不会随催化剂/增强变化的配方 | catalyzable、boostable 或其他依赖实际机器配置的概率 |
 | GTCEu Modern 7 | 已建模的独立 `OR` 概率输出提交 | 固定数量、独立 `OR`、且所有电压 tier 下有效概率不变 | `AND`/`XOR`/`FIRST`/custom、范围数量、tick 输出、tier chance boost 或自定义等级函数 |
 | Immersive Engineering | Crusher 与标准 Arc Furnace | 对应原生概率副产物；Arc Furnace 按 JSON/JEI 的概率语义处理，修正上游反向比较 | 非标准/无法稳定关联机器状态的输出语义 |
+| Productive Bees | Centrifuge 的最终产物提交路径，覆盖普通、动力和加热离心机 | 多个独立 item 输出、整数 `min..max` 数量范围、固定 fluid 输出；普通/加热 JEI 输出分别建模 | 非 centrifuge 的基因瓶随机产物；它不是静态 centrifuge recipe，无法生成普通 AE2 处理样板 |
+| Integrated Dynamics | Mechanical Squeezer 的非模拟最终提交路径 | 多个独立、固定数量的概率 item 输出及固定 fluid 输出 | 手动 Squeezer；覆盖 `assemble(ItemStack)`、使产物依赖运行时输入的第三方配方 |
+
+Productive Bees 的一次范围产物不是简单取平均值。例如 `80% × 1..3` 使用 15 次完整周期：1、2、3 各命中 4 次，另 3 次不产出，总计 24。AE2 样板因此写成 15 份输入对应 24 份该产物；多个输出 lane 的周期再取最小公倍数。其正式 jar 内嵌 ProductiveLib，构建脚本只为 Loom/CI 从同一官方 jar 提取该库到本地 `.gradle` 缓存，不把第三方二进制纳入仓库。
+
+Integrated Dynamics 的 Mechanical Squeezer 在一次处理结束时先执行模拟容量检查，再执行真正提交。适配只拦截后者的概率抽取，因此输出槽不足、模拟或取消不会消耗确定序列；状态按机器、配方和输出 lane 写入 NBT。手动 Squeezer 使用另一套玩家交互执行路径，且不是普通 AE2 机器处理目标，因此不宣称支持。
 
 ### 独立概率与互斥概率
 
@@ -115,11 +121,15 @@ AE2 的一张精确批次样板，应由**同一个 provider 投入一台机器*
 
 “多个结果中恰好选一个”的互斥/加权分布不能拆成几组独立布尔概率。只有适配器能把这类分布描述为一个完整互斥周期时才能支持；否则必须返回 `RECOGNIZED_BUT_UNSUPPORTED`。
 
+Create Sequenced Assembly 是已实现的互斥模型：先把 `resultPool` 的 float 权重恢复成最小整数比，再对权重总和构造一个完整置换周期。每次完成只选择一个结果，整周期内每种结果的次数严格等于其约分后权重。状态属于真正完成最后一步的 Press、Saw、Deployer 或 Spout，并按配方和结果池签名持久化。JEI 样板把初始材料、`loops` 次部署消耗品与注液量一起放大到同一周期。
+
+KubeJS 的标准 Create DSL 最终仍注册原生 `SequencedAssemblyRecipe`，因此不需要链接 KubeJS 类；整数和小数 `withChance` 权重共享上述路径。只有绕开原生 serializer、使用运行时事件再次随机或修改机器输出的脚本属于动态语义，无法由静态 JEI recipe 精确表示。
+
 ## 已审计但暂缓的家族
 
 ### Create 其他处理路径
 
-Fan 水洗/缠魂、Basin、Manual Application 与 Sandpaper 等路径目前没有纳入可持久化的单机提交上下文。对它们做全局 `ProcessingOutput` 拦截会让预览、不同机器或世界中的执行共享错误相位，因此仅支持 Milling 与 Crushing。
+Fan 水洗/缠魂、Basin、Manual Application 与 Sandpaper 等普通 ProcessingRecipe 路径目前没有纳入可持久化的单机提交上下文。对它们做全局 `ProcessingOutput` 拦截会让预览、不同机器或世界中的执行共享错误相位，因此普通独立概率输出仅支持 Milling 与 Crushing。Sequenced Assembly 另有独立互斥模型，并覆盖其允许的四种最后步骤机器。
 
 ### Ender IO
 
